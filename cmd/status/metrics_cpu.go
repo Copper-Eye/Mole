@@ -31,11 +31,34 @@ func collectCPU() (CPUStatus, error) {
 		logical = 1
 	}
 
+	// Capture system-wide CPU times before sleep
+	times1, _ := cpu.Times(false)
+
 	// Two-call pattern for more reliable CPU usage.
 	warmUpCPU()
 	time.Sleep(cpuSampleInterval)
 	percents, err := cpu.Percent(0, true)
+
+	// Capture system-wide CPU times after sleep
+	times2, _ := cpu.Times(false)
+
 	var totalPercent float64
+	var userPercent, sysPercent, idlePercent float64
+
+	// Calculate breakdown if we have two valid snapshots
+	if len(times1) > 0 && len(times2) > 0 {
+		t1 := times1[0]
+		t2 := times2[0]
+
+		total := (t2.User - t1.User) + (t2.System - t1.System) + (t2.Idle - t1.Idle) + (t2.Nice - t1.Nice) + (t2.Iowait - t1.Iowait) + (t2.Irq - t1.Irq) + (t2.Softirq - t1.Softirq) + (t2.Steal - t1.Steal)
+
+		if total > 0 {
+			userPercent = ((t2.User - t1.User) / total) * 100
+			sysPercent = ((t2.System - t1.System) / total) * 100
+			idlePercent = ((t2.Idle - t1.Idle) / total) * 100
+		}
+	}
+
 	perCoreEstimated := false
 	if err != nil || len(percents) == 0 {
 		fallbackUsage, fallbackPerCore, fallbackErr := fallbackCPUUtilization(logical)
@@ -48,6 +71,9 @@ func collectCPU() (CPUStatus, error) {
 		totalPercent = fallbackUsage
 		percents = fallbackPerCore
 		perCoreEstimated = true
+
+		// Fallback for breakdown if possible (simplified/estimate)
+		// We might not have granular breakdown from fallback, keep 0 or estimate
 	} else {
 		for _, v := range percents {
 			totalPercent += v
@@ -71,6 +97,9 @@ func collectCPU() (CPUStatus, error) {
 
 	return CPUStatus{
 		Usage:            totalPercent,
+		User:             userPercent,
+		System:           sysPercent,
+		Idle:             idlePercent,
 		PerCore:          percents,
 		PerCoreEstimated: perCoreEstimated,
 		Load1:            loadAvg.Load1,

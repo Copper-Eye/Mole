@@ -139,7 +139,13 @@ func (m model) View() string {
 		return "Loading..."
 	}
 
-	header := renderHeader(m.metrics, m.errMessage, m.animFrame, m.width, m.catHidden)
+	// Auto-hide cat if height is too small to fit everything
+	actualHidden := m.catHidden
+	if m.height < 40 {
+		actualHidden = true
+	}
+
+	header := renderHeader(m.metrics, m.errMessage, m.animFrame, m.width, actualHidden)
 	cardWidth := 0
 	if m.width > 80 {
 		cardWidth = maxInt(24, m.width/2-4)

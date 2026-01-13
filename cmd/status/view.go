@@ -203,7 +203,7 @@ func getScoreStyle(score int) lipgloss.Style {
 
 func buildCards(m MetricsSnapshot, _ int) []cardData {
 	cards := []cardData{
-		renderCPUCard(m.CPU),
+		renderCPUCard(m.CPU, m.Thermal),
 		renderMemoryCard(m.Memory),
 		renderDiskCard(m.Disks, m.DiskIO),
 		renderBatteryCard(m.Batteries, m.Thermal),
@@ -225,9 +225,18 @@ func hasSensorData(sensors []SensorReading) bool {
 	return false
 }
 
-func renderCPUCard(cpu CPUStatus) cardData {
+func renderCPUCard(cpu CPUStatus, thermal ThermalStatus) cardData {
 	var lines []string
-	lines = append(lines, fmt.Sprintf("Total  %s  %5.1f%%", progressBar(cpu.Usage), cpu.Usage))
+
+	// Line 1: Usage + Temp (Format: 15% @ 30.4°C)
+	usageBar := progressBar(cpu.Usage)
+
+	headerText := fmt.Sprintf("%5.1f%%", cpu.Usage)
+	if thermal.CPUTemp > 0 {
+		headerText += fmt.Sprintf(" @ %s°C", colorizeTemp(thermal.CPUTemp))
+	}
+
+	lines = append(lines, fmt.Sprintf("Total  %s  %s", usageBar, headerText))
 
 	if cpu.PerCoreEstimated {
 		lines = append(lines, subtleStyle.Render("Per-core data unavailable (using averaged load)"))
@@ -405,7 +414,7 @@ func renderProcessCard(procs []ProcessInfo) cardData {
 	if len(lines) == 0 {
 		lines = append(lines, subtleStyle.Render("No data"))
 	}
-	return cardData{icon: iconProcs, title: "Processes", lines: lines}
+	return cardData{icon: iconProcs, title: "Top Consumers", lines: lines}
 }
 
 func miniBar(percent float64) string {
@@ -641,12 +650,16 @@ func colorizeBattery(percent float64, s string) string {
 
 func colorizeTemp(t float64) string {
 	switch {
-	case t >= 85:
-		return dangerStyle.Render(fmt.Sprintf("%.1f", t))
-	case t >= 70:
-		return warnStyle.Render(fmt.Sprintf("%.1f", t))
-	default:
-		return subtleStyle.Render(fmt.Sprintf("%.1f", t))
+	case t >= 76: // Critical
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#FF6B6B")).Bold(true).Render(fmt.Sprintf("%.1f", t))
+	case t >= 66: // Warning (Upper)
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#FFAF5F")).Bold(true).Render(fmt.Sprintf("%.1f", t))
+	case t >= 56: // Warning
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD75F")).Bold(true).Render(fmt.Sprintf("%.1f", t))
+	case t >= 45: // Normal (Upper)
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#87D787")).Bold(true).Render(fmt.Sprintf("%.1f", t))
+	default: // Normal
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("#87FF87")).Bold(true).Render(fmt.Sprintf("%.1f", t))
 	}
 }
 
@@ -743,6 +756,12 @@ func renderTwoColumns(cards []cardData, width int) string {
 	var spacedRows []string
 	for i, r := range rows {
 		if i > 0 {
+			// Add blank line only if we have plenty of vertical space?
+			// For now, let's keep it tight or check height if we had access to it.
+			// To be safe against scrolling, let's remove the extra gap or make it optional.
+			// Let's us empty string for minimal gap if needed, but here we just append.
+			// To match user's previous visual, there was a gap.
+			// But since we are overflowing, let's omit it for now or rely on the padded cards.
 			spacedRows = append(spacedRows, "")
 		}
 		spacedRows = append(spacedRows, r)

@@ -171,10 +171,9 @@ Real-time dashboard with system health score, hardware info, and performance met
 ```bash
 $ mo status
 
-Mole Status  Health ● 92  MacBook Pro · M4 Pro · 32GB · macOS 14.5
-
+Mole Status  Health ● 92  MacBook Pro · M4 Pro · 32GB · macOS
 ⚙ CPU                                    ▦ Memory
-Total   ████████████░░░░░░░  45.2%       Used    ███████████░░░░░░░  58.4%
+Total   ████████████░░░░░░░  45.2% @ 58°C Used    ███████████░░░░░░░  58.4%
 Load    0.82 / 1.05 / 1.23 (8 cores)     Total   14.2 / 24.0 GB
 Core 1  ███████████████░░░░  78.3%       Free    ████████░░░░░░░░░░  41.6%
 Core 2  ████████████░░░░░░░  62.1%       Avail   9.8 GB
@@ -183,9 +182,9 @@ Core 2  ████████████░░░░░░░  62.1%       A
 Used    █████████████░░░░░░  67.2%       Level   ██████████████████  100%
 Free    156.3 GB                         Status  Charged
 Read    ▮▯▯▯▯  2.1 MB/s                  Health  Normal · 423 cycles
-Write   ▮▮▮▯▯  18.3 MB/s                 Temp    58°C · 1200 RPM
+Write   ▮▮▮▯▯  18.3 MB/s                 Temp    30°C
 
-⇅ Network                                ▶ Processes
+⇅ Network                                ❊ Top Consumers
 Down    ▮▮▯▯▯  3.2 MB/s                  Code       ▮▮▮▮▯  42.1%
 Up      ▮▯▯▯▯  0.8 MB/s                  Chrome     ▮▮▮▯▯  28.3%
 Proxy   HTTP · 192.168.1.100             Terminal   ▮▯▯▯▯  12.5%

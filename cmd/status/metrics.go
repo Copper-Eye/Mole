@@ -58,6 +58,9 @@ type ProcessInfo struct {
 
 type CPUStatus struct {
 	Usage            float64
+	User             float64
+	System           float64
+	Idle             float64
 	PerCore          []float64
 	PerCoreEstimated bool
 	Load1            float64
